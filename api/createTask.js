@@ -31,20 +31,25 @@ export default async function handler(req, res) {
       headers: {
         'Content-Type': 'application/json',
         'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'return=representation'  // ✅ ← ここが超重要！
       },
       body: JSON.stringify({ title, user_id })
     });
 
-    const data = await response.json();
+    // ✅ Supabaseが返すステータスによって処理を分岐
+    let data = null;
+    if (response.status !== 204) {
+      data = await response.json();
+    }
 
     if (!response.ok) {
       console.error("❌ Supabase responded with error:", data);
-      return res.status(response.status).json({ error: data });
+      return res.status(response.status).json({ error: data || 'Unknown error' });
     }
 
     console.log("✅ Task successfully created:", data);
-    return res.status(201).json(data);
+    return res.status(201).json(data || { success: true });
   } catch (err) {
     console.error("💥 Unexpected error:", err);
     return res.status(500).json({ error: 'Server error', details: err.message });
