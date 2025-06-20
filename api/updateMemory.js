@@ -16,9 +16,21 @@ export default async function handler(req, res) {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
+  const updates = {};
+  if (title !== undefined && title !== null) updates.title = title;
+  if (category !== undefined && category !== null) updates.category = category;
+  if (content !== undefined && content !== null) updates.content = content;
+
+  // 自動で updated_at を更新（任意）
+  updates.updated_at = new Date().toISOString();
+
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({ success: false, message: 'No fields to update' });
+  }
+
   const { error } = await supabase
     .from('memories')
-    .update({ title, category, content })
+    .update(updates)
     .eq('id', id);
 
   if (error) {
